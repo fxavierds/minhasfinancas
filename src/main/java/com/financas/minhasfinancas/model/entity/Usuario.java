@@ -2,13 +2,17 @@ package com.financas.minhasfinancas.model.entity;
 
 import javax.persistence.*;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table( name = "usuario", schema = "financas")
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Usuario {
 	
 	@Id
