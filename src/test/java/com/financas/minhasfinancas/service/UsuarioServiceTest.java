@@ -1,27 +1,26 @@
 package com.financas.minhasfinancas.service;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.RETURNS_SMART_NULLS;
 
-import org.aspectj.lang.annotation.Before;
+import java.util.Optional;
+
 import org.assertj.core.api.Assertions;
-import org.assertj.core.api.NotThrownAssert;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.omg.CORBA.portable.ApplicationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import com.financas.minhasfinancas.exceptions.ErroAutenticacao;
 import com.financas.minhasfinancas.exceptions.RegraNegocioException;
 import com.financas.minhasfinancas.model.entity.Usuario;
 import com.financas.minhasfinancas.model.repository.UsuarioRepository;
+import com.financas.minhasfinancas.service.impl.UsuarioServiceImpl;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -30,23 +29,47 @@ public class UsuarioServiceTest {
 	
 	@Autowired
 	UsuarioService service;	
+	@MockBean
 	UsuarioRepository repository;
 	
-	@BeforeAll
+	@BeforeEach
 	public void setup() {
+		service = new UsuarioServiceImpl(repository);		
+	}
+	
+	@Test
+	public void deveAutenticarUmUsuarioComSucesso() {
+		String email = "email@email.com";
+		String senha = "senha";
 		
+		Usuario usuario = Usuario.builder().email(email).senha(senha).id(11l).build();
+		Mockito.when(repository.findByEmail(email)).thenReturn(Optional.of(usuario));
+		
+		Usuario result = service.autenticar(email, senha);
+		Assertions.assertThat(result).isNotNull();
+	}
+	
+	@Test
+	public void deveLancarErroQuandoNaoEncontrarErroCadastradoComEmailInformado() {
+		Mockito.when(repository.findByEmail(Mockito.anyString())).thenReturn(Optional.empty());
+				
+		Throwable exception =  Assertions.catchThrowable( () -> service.autenticar("email@email.com", "senha"));
+		Assertions.assertThat(exception).isInstanceOf(ErroAutenticacao.class).hasMessage("Usuário não encontrado.");
+	}
+	
+	@Test
+	public void deveLancarErroQuandoSenhaNaoBater() {
+		String senha = "senha";
+		Usuario usuario = Usuario.builder().email("email@email.com").senha(senha).id(11l).build();
+		Mockito.when(repository.findByEmail(Mockito.anyString())).thenReturn(Optional.of(usuario));
+		Throwable exception =  Assertions.catchThrowable( () -> service.autenticar("email@email.com", "123"));
+		Assertions.assertThat(exception).isInstanceOf(ErroAutenticacao.class).hasMessage("Senha inválida.");
 	}
 	
 	@Test
 	public void deveValidarEmail() {
-		UsuarioRepository usuarioRepositoryMock = Mockito.mock(UsuarioRepository.class);
-		repository.deleteAll();
-		
-		assertThrows(NullPointerException.class, () -> {
-			service.validarEmail("email@email.com");
-		}, "NumberFormatException was expected");
-		
-		
+		Mockito.when(repository.existsByEmail(Mockito.anyString())).thenReturn(false);
+		service.validarEmail("email@email.com");				
 	}
 	
 	@Test
