@@ -1,6 +1,9 @@
 package com.financas.minhasfinancas.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Optional;
 
@@ -10,11 +13,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.util.Assert;
 
 import com.financas.minhasfinancas.exceptions.ErroAutenticacao;
 import com.financas.minhasfinancas.exceptions.RegraNegocioException;
@@ -27,14 +33,39 @@ import com.financas.minhasfinancas.service.impl.UsuarioServiceImpl;
 @ActiveProfiles("test")
 public class UsuarioServiceTest {
 	
-	@Autowired
-	UsuarioService service;	
+	@SpyBean
+	UsuarioServiceImpl service;	
+	
 	@MockBean
 	UsuarioRepository repository;
 	
-	@BeforeEach
-	public void setup() {
-		service = new UsuarioServiceImpl(repository);		
+	@Test
+	public void deveSalvarUmUsuario() {
+		Mockito.doNothing().when(service).validarEmail(Mockito.anyString());
+		Usuario usuario = Usuario.builder()
+				.id(1L)
+				.email("email@email.com")
+				.nome("nome")
+				.senha("senha")
+				.build();
+		Mockito.when(repository.save(Mockito.any(Usuario.class))).thenReturn(usuario);
+		Usuario usuarioSalvo = service.salvarUsuario(new Usuario());
+		assertNotNull(usuarioSalvo);	
+		assertThat(usuarioSalvo.getId()).isEqualTo(1L);	
+		assertThat(usuarioSalvo.getNome()).isEqualTo("nome");
+		assertThat(usuarioSalvo.getEmail()).isEqualTo("email@email.com");
+		assertThat(usuarioSalvo.getSenha()).isEqualTo("senha");		
+	}
+	
+	@Test
+	public void naoDeveSalvarUmUsuarioComEmailJaCadastrado() {
+		String email = "email@email.com";
+		Usuario usuario = Usuario.builder().email(email).build();
+		
+		Mockito.doThrow(RegraNegocioException.class).when(service).validarEmail(email);
+				
+		service.salvarUsuario(usuario);
+		Mockito.verify(repository, Mockito.never()).save(usuario);
 	}
 	
 	@Test
@@ -80,7 +111,7 @@ public class UsuarioServiceTest {
 		
 		assertThrows(RegraNegocioException.class, () -> {
 			service.validarEmail("email@email.com");
-		}, "NumberFormatException was expected");
+		}, "RegraNegocioException was expected");
 		
 	}
 }
