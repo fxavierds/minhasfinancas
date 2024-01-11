@@ -66,30 +66,30 @@ public class LancamentoServiceImpl implements LancamentoService {
 
 	@Override
 	public void validarLancamento(Lancamento lancamento) {
-		if(lancamento.getDescricao() == null || lancamento.getDescricao().trim().equals("")) {
+		if (lancamento.getDescricao() == null || lancamento.getDescricao().trim().equals("")) {
 			throw new RegraNegocioException("Informe uma descrição válida");
 		}
-		
-		if(lancamento.getMes() == null || lancamento.getMes() < 1 || lancamento.getMes() > 12) {
+
+		if (lancamento.getMes() == null || lancamento.getMes() < 1 || lancamento.getMes() > 12) {
 			throw new RegraNegocioException("Informe um mês válido");
 		}
-		
-		if(lancamento.getAno() == null || lancamento.getAno().toString().length() < 4) {
+
+		if (lancamento.getAno() == null || lancamento.getAno().toString().length() < 4) {
 			throw new RegraNegocioException("Informe um ano válido");
 		}
-		
-		if(lancamento.getUsuario() == null || lancamento.getUsuario().getId() == null) {
+
+		if (lancamento.getUsuario() == null || lancamento.getUsuario().getId() == null) {
 			throw new RegraNegocioException("Informe um usuário válido");
 		}
-		
-		if(lancamento.getValor() == null || lancamento.getValor().compareTo(BigDecimal.ZERO) < 1) {
+
+		if (lancamento.getValor() == null || lancamento.getValor().compareTo(BigDecimal.ZERO) < 1) {
 			throw new RegraNegocioException("Informe um valor válido");
 		}
-		
-		if(lancamento.getTipo() == null ) {
+
+		if (lancamento.getTipo() == null) {
 			throw new RegraNegocioException("Informe um tipo válido");
 		}
-		
+
 	}
 
 	@Override
@@ -100,17 +100,17 @@ public class LancamentoServiceImpl implements LancamentoService {
 	@Override
 	@Transactional(readOnly = true)
 	public BigDecimal obterSaldoPorUsuario(Long id) {
-		BigDecimal receitas = repository.obterSaldoPorTipoLancamentoUsuario(id, TipoLancamento.RECEITA);
-		BigDecimal despesas = repository.obterSaldoPorTipoLancamentoUsuario(id, TipoLancamento.DESPESA);
-		
-		if(receitas == null) {
+		BigDecimal receitas = repository.obterSaldoPorTipoLancamentoUsuarioEStatus(id, TipoLancamento.RECEITA, StatusLancamento.EFETIVADO);
+		BigDecimal despesas = repository.obterSaldoPorTipoLancamentoUsuarioEStatus(id, TipoLancamento.DESPESA, StatusLancamento.EFETIVADO);
+
+		if (receitas == null) {
 			receitas = BigDecimal.ZERO;
 		}
-		
-		if(despesas == null) {
+
+		if (despesas == null) {
 			despesas = BigDecimal.ZERO;
 		}
-		
+
 		return receitas.subtract(despesas);
 	}
 
