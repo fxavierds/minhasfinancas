@@ -3,25 +3,20 @@ package com.financas.minhasfinancas.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Optional;
 
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.mockito.Spy;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.util.Assert;
-
 import com.financas.minhasfinancas.exceptions.ErroAutenticacao;
 import com.financas.minhasfinancas.exceptions.RegraNegocioException;
 import com.financas.minhasfinancas.model.entity.Usuario;
@@ -64,8 +59,13 @@ public class UsuarioServiceTest {
 		
 		Mockito.doThrow(RegraNegocioException.class).when(service).validarEmail(email);
 				
-		service.salvarUsuario(usuario);
-		Mockito.verify(repository, Mockito.never()).save(usuario);
+		try {
+	        service.salvarUsuario(usuario);
+	        fail("Deveria lançar uma RegraNegocioException");
+	    } catch (RegraNegocioException e) {
+	        // Verifica se o método save(usuario) do repositório não foi chamado
+	        Mockito.verify(repository, Mockito.never()).save(usuario);
+	    }
 	}
 	
 	@Test
@@ -106,6 +106,8 @@ public class UsuarioServiceTest {
 	@Test
 	@DisplayName("Verifica se já existe um email")
 	public void deveLancarErroAoValidarEmailQuandoNaoHouverEmailCadastrado() {
+		repository.deleteAll();
+		
 		Usuario usuario = Usuario.builder().nome("usuario").email("email@email.com").build();
 		repository.save(usuario);
 		
