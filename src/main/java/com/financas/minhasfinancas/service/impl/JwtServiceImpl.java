@@ -6,6 +6,7 @@ import java.time.ZoneId;
 import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import com.financas.minhasfinancas.model.entity.Usuario;
 import com.financas.minhasfinancas.service.JwtService;
@@ -15,6 +16,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
+@Service
 public class JwtServiceImpl implements JwtService {
 	
 	@Value("${jwt.expiracao}")
@@ -40,20 +42,27 @@ public class JwtServiceImpl implements JwtService {
 
 	@Override
 	public Claims obterClaims(String token) throws ExpiredJwtException {
-		// TODO Auto-generated method stub
-		return null;
+		return Jwts.parser().setSigningKey(chaveAssinatura).parseClaimsJws(token).getBody();
 	}
 
 	@Override
 	public boolean isTokenValid(String token) {
-		// TODO Auto-generated method stub
-		return false;
+		try {
+			Claims claims = obterClaims(token);
+			java.util.Date dataExp = claims.getExpiration();
+			LocalDateTime dataExpiracao = dataExp.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+			boolean dataHoraAtualisAfterDataExpiracao = LocalDateTime.now().isAfter(dataExpiracao);
+			return !dataHoraAtualisAfterDataExpiracao;
+		}catch (Exception e) {
+			return false;
+		}
+		
 	}
 
 	@Override
 	public String obterLoginUsuario(String token) {
-		// TODO Auto-generated method stub
-		return null;
+		Claims claims = obterClaims(token);
+		return claims.getSubject();
 	}
 
 }
