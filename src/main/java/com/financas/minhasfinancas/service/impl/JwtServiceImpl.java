@@ -3,6 +3,7 @@ package com.financas.minhasfinancas.service.impl;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -32,9 +33,14 @@ public class JwtServiceImpl implements JwtService {
 		Instant instant = dataHoraExpiracao.atZone(ZoneId.systemDefault()).toInstant();
 		java.util.Date data = Date.from(instant);
 		
+		String horaExpiracaoToken = dataHoraExpiracao.toLocalTime()
+				.format(DateTimeFormatter.ofPattern("HH:mm"));
+		
 		String token = Jwts.builder()
 				.setExpiration(data)
 				.setSubject(usuario.getEmail())
+				.claim("userId", usuario.getId())
+				.claim("nome", horaExpiracaoToken)
 				.signWith(SignatureAlgorithm.HS512, chaveAssinatura)
 				.compact();
 		return token;
