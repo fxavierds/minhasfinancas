@@ -13,7 +13,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.financas.minhasfinancas.model.entity.Usuario;
 import com.financas.minhasfinancas.service.JwtService;
 import com.financas.minhasfinancas.service.impl.SecurityUserDetailService;
 
